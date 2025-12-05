@@ -1,0 +1,6 @@
+requests
+beautifulsoup4
+google-genai
+youtube-transcript-api
+supabase
+python-dotenv
