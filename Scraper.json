@@ -1,0 +1,166 @@
+{
+  "name": "Scraper",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        -80
+      ],
+      "id": "3a77a75d-fc32-4154-8a88-c3ad890e5b11",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ZZ8kbPjfCcdwLGcF8GJJDVW3G8aJJ_7u7UeG-lq4mB4",
+          "mode": "list",
+          "cachedResultName": "Moraya_Links",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZZ8kbPjfCcdwLGcF8GJJDVW3G8aJJ_7u7UeG-lq4mB4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "links",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1488,
+        176
+      ],
+      "id": "8fc08fc8-23c7-4427-94f9-03790a70454a",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fhjbgf6quOPIcaSG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\ntoday.setHours(0, 0, 0, 0);\n\n\nconst todayItems = $input.all().filter(item => {\n  const dateString = item.json.Date;\n  // Parse the date string (e.g., \"December 5, 2025 at 10:36PM\")\n  const datePart = dateString.split(' at ')[0];\n  const itemDate = new Date(datePart);\n  itemDate.setHours(0, 0, 0, 0);\n  \n  return itemDate.getTime() === today.getTime();\n});\n\n// Return only the Link field for each item\nlet arrItems = []\ntodayItems.map(item => ( arrItems.push(item.json.Link) ));\n\nreturn {\"links\": arrItems}"
+      },
+      "id": "174bbc17-7972-42ab-a634-6e6e80b9d243",
+      "name": "Check if Date is Today",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1728,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "scraper_data",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "original_links",
+              "fieldValue": "={{ $json.links }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1984,
+        176
+      ],
+      "id": "bf75a1ed-221e-49ab-a897-9ce06e911d7f",
+      "name": "Create a row",
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "45gNl53g0pRJTJi6",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 23,
+              "triggerAtMinute": 50
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        1072,
+        224
+      ],
+      "id": "cc7dbd6e-00ce-4ccb-8211-b003d8c2bee0",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Check if Date is Today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Date is Today": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "874f44e6-e64f-4770-a84f-5f62dda3056f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8abfb0ef5ba5d6c7d418512ff99ea13d11c7a6a11067b4034e14f3bb25469504"
+  },
+  "id": "oMwJkQblpDXGPA02",
+  "tags": []
+}
