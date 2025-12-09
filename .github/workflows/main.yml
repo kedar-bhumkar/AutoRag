@@ -2,7 +2,7 @@ name: Supabase Scraper
 
 on:
   schedule:
-    - cron: "0 * * * *"   # runs every hour
+    - cron: "45 11 * * *"   # runs every hour
   workflow_dispatch:      # allows manual run
 
 jobs:

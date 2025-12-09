@@ -292,6 +292,7 @@ def main():
     
     # We need to keep track of generated files for the next step
     generated_files = [] # List of full paths
+    filenameToUrl = {} # Map filename -> url
 
     for batch_idx, url_batch in enumerate(batch_process(urls, BATCH_SIZE)):
         print(f"Processing Scraping Batch {batch_idx + 1}...")
@@ -311,6 +312,7 @@ def main():
                     f.write(content)
                 
                 generated_files.append(filepath)
+                filenameToUrl[os.path.basename(filepath)] = url
                 print(f"  Saved: {os.path.basename(filepath)}")
             else:
                 print(f"  Skipped (no content): {url}")
@@ -323,7 +325,7 @@ def main():
     print("\nStarting Batch Classification...")
     
     # Map filename -> [categories]
-    file_categories = {}
+    filesToCategories = {}
     
     # Read files and classify in batches
     for batch_idx, file_batch in enumerate(batch_process(generated_files, BATCH_SIZE)):
@@ -339,7 +341,7 @@ def main():
         
         if batch_contents:
             results = classify_content_batch(client, batch_contents)
-            file_categories.update(results)
+            filesToCategories.update(results)
             print(f"  Classified {len(results)} files.")
 
     # --- Step 4 & 5: Upload and Vectorize ---
@@ -363,7 +365,7 @@ def main():
     # Category -> List of gemini_file_objects
     category_groups = defaultdict(list)
     
-    for filename, categories in file_categories.items():
+    for filename, categories in filesToCategories.items():
         if filename in uploaded_files_map:
             gemini_file = uploaded_files_map[filename]
             for cat in categories:
@@ -407,10 +409,27 @@ def main():
             
             # Import files
             for file in files:
+                # Retrieve metadata for all files
+                cats = filesToCategories.get(file.display_name, [])
+                url_val = filenameToUrl.get(file.display_name, "")
+                
                 client.file_search_stores.import_file(
                     file_search_store_name=store_name, 
-                    file_name=file.name
-                )
+                    file_name=file.name,
+                    config={                            
+                           "custom_metadata": [
+                                    {"key": "url", "string_value": f"{url_val}"},
+                                    {
+                                    "key": "categories",
+                                    "string_list_value": {
+                                       "values": cats
+                                    }
+                                }
+        ]
+                        }
+                    )
+                    
+                  
             print(f"    Added {len(files)} files to {category} store.")
             
         except Exception as e:
@@ -475,7 +494,7 @@ def main():
                 continue
 
             # Get Categories
-            cats = file_categories.get(filename, ['Other'])
+            cats = filesToCategories.get(filename, ['Other'])
             cats_str = ", ".join(cats)
             
             scraper_data_list.append({
