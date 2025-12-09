@@ -1,0 +1,15 @@
+Source URL: https://huggingface.co/zai-org/AutoGLM-Phone-9B
+Title: zai-org/AutoGLM-Phone-9B · Hugging Face
+
+zai-org / AutoGLM-Phone-9B like 65 Follow Z.ai 5.64k Image-Text-to-Text Transformers Safetensors Chinese glm4v any-to-any agent conversational arxiv: 2411.00820 arxiv: 2509.18119 License: mit Model card Files Files and versions xet Community 2 Deploy Use this model AutoGLM-Phone-9B Project Overview Model Usage Citation AutoGLM-Phone-9B 👋 Join our WeChat community ⚠️ This project is intended for research and educational purposes only . Any use for illegal data access, system interference, or unlawful activities is strictly prohibited. Please review our Terms of Use carefully. Project Overview Phone Agent is a mobile intelligent assistant framework built on AutoGLM , capable of understanding smartphone screens through multimodal perception and executing automated operations to complete tasks. The system controls devices via ADB (Android Debug Bridge) , uses a vision-language model for screen understanding, and leverages intelligent planning to generate and execute action sequences. Users can simply describe tasks in natural language—for example, “Open Xiaohongshu and search for food recommendations.” Phone Agent will automatically parse the intent, understand the current UI, plan the next steps, and carry out the entire workflow. The system also includes: Sensitive action confirmation mechanisms Human-in-the-loop fallback for login or verification code scenarios Remote ADB debugging , allowing device connection via WiFi or network for flexible remote control and development Model Usage We provide an open-source model usage guide to help you quickly download and deploy the model. Please visit our GitHub for detailed instructions. The model architecture is identical to GLM-4.1V-9B-Thinking . For deployment details, see the GLM-V repository. Citation If you find our work helpful, please cite the following paper: @article{liu2024autoglm,
+  title={Autoglm: Autonomous foundation agents for guis},
+  author={Liu, Xiao and Qin, Bo and Liang, Dongzhu and Dong, Guang and Lai, Hanyu and Zhang, Hanchen and Zhao, Hanlin and Iong, Iat Long and Sun, Jiadai and Wang, Jiaqi and others},
+  journal={arXiv preprint arXiv:2411.00820},
+  year={2024}
+}
+@article{xu2025mobilerl,
+  title={MobileRL: Online Agentic Reinforcement Learning for Mobile GUI Agents},
+  author={Xu, Yifan and Liu, Xiao and Liu, Xinghan and Fu, Jiaqi and Zhang, Hanchen and Jing, Bohao and Zhang, Shudan and Wang, Yuting and Zhao, Wenyi and Dong, Yuxiao},
+  journal={arXiv preprint arXiv:2509.18119},
+  year={2025}
+} Downloads last month 229 Safetensors Model size 934k params Tensor type BF16 · Chat template Files info Inference Providers NEW Image-Text-to-Text This model isn't deployed by any Inference Provider. 🙋 Ask for provider support Model tree for zai-org/AutoGLM-Phone-9B Base model zai-org/GLM-4-9B-0414 Finetuned zai-org/GLM-4.1V-9B-Base Finetuned ( 7 ) this model

@@ -209,6 +209,55 @@ def classify_content_batch(client, file_contents):
         # Fallback: assign 'Other' to all in this batch
         return {fname: ['Other'] for fname in file_contents.keys()}
 
+def summarize_content(client, content):
+    """
+    Summarizes content using Gemini and returns a summary object.
+    Returns: dict {"title": "...", "summary_points": ["...", "..."]}
+    """
+    if not content:
+        return {}
+
+    prompt = f"""
+    You are a helpful assistant that summarizes text.
+    Summarize the provided text in detail as a list of key points and provide a suitable small title.
+    Return the response in JSON format with two keys: "title" and "summary_points".
+    
+    Example format:
+    {{
+        "title": "Short Descriptive Title",
+        "summary_points": [
+            "Point 1",
+            "Point 2",
+            "Point 3"
+        ]
+    }}
+    
+    Text to summarize:
+    {content[:30000]} 
+    """
+    
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-exp", 
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json"
+            )
+        )
+        
+        text = response.text.strip()
+        # Clean markdown if present
+        if text.startswith("```json"):
+            text = text[7:-3]
+        elif text.startswith("```"):
+            text = text[3:-3]
+            
+        data = json.loads(text)
+        return data
+    except Exception as e:
+        print(f"Error summarizing content: {e}")
+        return {}
+
 # --- Main Pipeline ---
 def main():
     print("Starting Classified RAG Pipeline...")
@@ -455,6 +504,7 @@ def main():
 
         
         scraper_data_list = []
+        aggregated_summaries = []
         
         for filepath in generated_files:
             filename = os.path.basename(filepath)
@@ -497,17 +547,49 @@ def main():
             cats = filesToCategories.get(filename, ['Other'])
             cats_str = ", ".join(cats)
             
+            # Summarize Content
+            print(f"  Summarizing {filename}...")
+            summary_data = summarize_content(client, file_content)
+
             scraper_data_list.append({
                 "link": file_url,
                 "categories": cats_str,
                 "content": file_content
             })
             
+            # Prepare agent_output data
+            if current_row_id:
+                 # Construct triplet: { "title", "link", "summary" }
+                 if summary_data:
+                     triplet = {
+                         "title": summary_data.get("title", "No Title"),
+                         "link": file_url,
+                         "summary": summary_data.get("summary_points", [])
+                     }
+                     aggregated_summaries.append(triplet)
+
         if scraper_data_list:
             if current_row_id:
                 print(f"  Updating Row ID {current_row_id} with content...")
                 data, count = supabase.table('scraper_data').update({"content": scraper_data_list}).eq('id', current_row_id).execute()
                 print(f"  Successfully updated row {current_row_id} in Supabase.")
+                
+                # Save to agent_output
+                try:
+                    agent_response = {
+                        "llm_summary": aggregated_summaries,
+                        "scraper_ref_id": current_row_id
+                    }
+                    
+                    supabase.table('agent_output').insert({
+                        "agent_name": "scraper_agent",
+                        "agent_response": agent_response,
+                        "status": "success",
+                        "user_id": "ked_3142"
+                    }).execute()
+                    print(f"  Saved aggregated summary to agent_output.")
+                except Exception as e:
+                    print(f"  Error saving to agent_output: {e}")
             else:
                 print("  Error: current_row_id is missing. Cannot update Supabase.")
         else:
